@@ -16,6 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
+import java.util.Random;
 
 import com.jt.qianxun.entity.Page;
 
@@ -23,7 +24,8 @@ public class PageUtil {
 	
 	private static String encoding = "UTF-8";
 	private static String type = "";
-	private Page page = new Page();
+	private static Page page = new Page();
+	private static Random random = new Random();
 	
 	/**
 	 * 
@@ -31,7 +33,7 @@ public class PageUtil {
 	 * @param spath：存放抓取文件的位置，文件名为当前时间yyyyMMddHHmmss
 	 * @return
 	 */
-	public String getHtml(String url, String spath) {
+	public static String getHtml(String url, String spath) {
 		StringBuilder path = new StringBuilder(spath);
 		HttpURLConnection conn = null;
 		InputStream is = null;
@@ -48,14 +50,14 @@ public class PageUtil {
 			type = conn.getContentType();
 			page.setType(type);
 			page.setUrl(url);
-			System.out.println("encoding: "+encoding);
-			System.out.println("type: "+type);
+//			System.out.println("encoding: "+encoding);
+//			System.out.println("type: "+type);
 			
 			is = (InputStream) conn.getContent();
 			br = new BufferedReader(new InputStreamReader(is));
 			String line = "";
-			fileName = path.append(DateUtil.getCurrentTimestamp()).toString();
-			System.out.println(fileName);
+			fileName = path.append(DateUtil.getCurrentTimestamp()).append("_").append(random.nextInt(100)).toString();
+//			System.out.println("the new filename is " + fileName);
 			File file = new File(fileName);
 			if(!file.exists()) {
 				File f = new File(file.getParent());
@@ -84,6 +86,10 @@ public class PageUtil {
 		return fileName;
 	}
 	
+	/**
+	 * create page object
+	 * @param path
+	 */
 	public void createPage(String path) {
 		File file = new File(path);
 		StringBuilder sb = new StringBuilder();
@@ -112,22 +118,18 @@ public class PageUtil {
 	public Page parsePage(Page page) {
 		String raw = page.getRaw();
 		
-		//抽取title
 		page.setTitle(HtmlPaser.getTitle(raw)) ;
 		
-		// 抽取网页中包含的链接
 		List<String> urls = HtmlPaser.paserUrls(raw,page.getUrl());
 		page.setUrls(urls);
 		
-
-		// 抽取网页中text正文
 		page.setContent(HtmlPaser.getExtractedText(raw));
 		
 		return page;
 	}
 	
 	/**
-	 * 把page写成文件
+	 * write page to a file
 	 * @param path
 	 */
 	public void writePage(String path) {
@@ -142,7 +144,12 @@ public class PageUtil {
 	}
 	
 	
-
+	/**
+	 * create file if there is no parent folder
+	 * @param fileName
+	 * @return
+	 * @throws IOException
+	 */
 	private File createFile(String fileName) throws IOException {
 		File file = new File(fileName);
 		if(!file.exists()) {
